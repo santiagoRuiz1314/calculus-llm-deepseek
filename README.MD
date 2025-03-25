@@ -116,17 +116,7 @@ python calculus_solver.py solve "Evaluate the improper integral of 1/x^2 from 1 
 python calculus_solver.py solve "Calculate the partial derivatives of f(x,y) = x^2y + y^3"
 ```
 
-You can also test with different models or parameters:
-
-```
-python calculus_solver.py solve "Find the derivative of f(x) = x^3 + 2x^2 - 5x + 3" --model llama3
-```
-
-```
-python calculus_solver.py solve "Find the derivative of f(x) = x^3 + 2x^2 - 5x + 3" --temperature 0.2
-```
-
-And for debugging purposes:
+## Debugging:
 
 ```
 python calculus_solver.py test --model deepseek-r1
