@@ -5,7 +5,7 @@ import argparse
 import requests
 
 class OllamaCalculusSolver:
-    def __init__(self, model_name="llama3", base_url="http://localhost:11434"):
+    def __init__(self, model_name="deepseek-r1", base_url="http://localhost:11434"):
         """Initialize the Ollama Calculus Solver with model name and base URL."""
         load_dotenv()
         self.model_name = model_name
@@ -20,9 +20,10 @@ class OllamaCalculusSolver:
                 print("Make sure Ollama is running with the command: 'ollama serve'")
             else:
                 models = response.json().get("models", [])
-                model_names = [model.get("name") for model in models]
+                model_names = [model.get("name").split(':')[0] for model in models]  # Strip tags like ':latest'
                 if self.model_name not in model_names and models:
-                    print(f"Warning: Model '{self.model_name}' not found in available models: {model_names}")
+                    available_models = ", ".join(set(model_names))
+                    print(f"Warning: Model '{self.model_name}' not found in available models: {available_models}")
                     print(f"You may need to run: 'ollama pull {self.model_name}'")
         except requests.exceptions.ConnectionError:
             print(f"Warning: Could not connect to Ollama server at {self.base_url}")
@@ -80,17 +81,24 @@ class OllamaCalculusSolver:
                 "messages": messages,
                 "options": {
                     "temperature": temperature
-                }
+                },
+                "stream": False  # Explicitly set stream to False
             }
             
             response = requests.post(self.api_url, json=payload)
             response.raise_for_status()
-            result = response.json()
             
-            if "message" in result:
-                return result["message"]["content"]
-            else:
-                return f"Error: Unexpected response format from Ollama: {result}"
+            try:
+                result = response.json()
+                
+                if "message" in result:
+                    return result["message"]["content"]
+                else:
+                    return f"Error: Unexpected response format from Ollama: {result}"
+            except json.JSONDecodeError as e:
+                # Handle JSON parsing error
+                return f"Error parsing response: {str(e)}\nResponse text: {response.text[:200]}..."
+                
         except requests.exceptions.RequestException as e:
             return f"Error: {str(e)}"
     
@@ -121,7 +129,7 @@ def main():
     solve_parser = subparsers.add_parser("solve", help="Solve a calculus problem")
     solve_parser.add_argument("problem", help="The calculus problem to solve")
     solve_parser.add_argument("--temperature", type=float, default=0.7, help="Temperature for response generation")
-    solve_parser.add_argument("--model", default="llama3", help="Model name to use (default: llama3)")
+    solve_parser.add_argument("--model", default="deepseek-r1", help="Model name to use (default: deepseek-r1)")
     solve_parser.add_argument("--url", default="http://localhost:11434", help="Ollama server URL")
     
     # Add example command
@@ -133,7 +141,8 @@ def main():
     subparsers.add_parser("list", help="List all examples in the training set")
     
     # List models command
-    subparsers.add_parser("models", help="List available models in Ollama")
+    list_models_parser = subparsers.add_parser("models", help="List available models in Ollama")
+    list_models_parser.add_argument("--url", default="http://localhost:11434", help="Ollama server URL")
     
     # Save examples command
     save_parser = subparsers.add_parser("save", help="Save examples to a file")
@@ -142,6 +151,11 @@ def main():
     # Load examples command
     load_parser = subparsers.add_parser("load", help="Load examples from a file")
     load_parser.add_argument("--filename", default="calculus_examples.json", help="Filename to load examples from")
+    
+    # Pure API test command (for debugging)
+    test_parser = subparsers.add_parser("test", help="Test direct API communication")
+    test_parser.add_argument("--model", default="deepseek-r1", help="Model name to test")
+    test_parser.add_argument("--url", default="http://localhost:11434", help="Ollama server URL")
     
     args = parser.parse_args()
     
@@ -166,10 +180,47 @@ def main():
                         print(f"- {model.get('name')}")
                 else:
                     print("No models found. You can pull models with 'ollama pull <model-name>'")
-                    print("Example: ollama pull llama3")
+                    print("Example: ollama pull deepseek-r1")
             except requests.exceptions.RequestException as e:
                 print(f"Error connecting to Ollama server: {str(e)}")
                 print("Make sure Ollama is running with the command: 'ollama serve'")
+        
+        elif args.command == "test":
+            # Simple API test with minimal context
+            base_url = args.url
+            api_url = f"{base_url}/api/chat"
+            
+            # Minimal prompt for testing
+            payload = {
+                "model": args.model,
+                "messages": [
+                    {"role": "user", "content": "What is 2+2?"}
+                ],
+                "stream": False
+            }
+            
+            print(f"Testing API connection to {api_url} with model {args.model}...")
+            try:
+                response = requests.post(api_url, json=payload)
+                response.raise_for_status()
+                
+                print(f"Response status: {response.status_code}")
+                print(f"Response headers: {response.headers}")
+                print(f"Response content type: {response.headers.get('Content-Type')}")
+                
+                # Print raw response
+                print("\nRaw response text:")
+                print(response.text[:500] + ("..." if len(response.text) > 500 else ""))
+                
+                # Try to parse JSON
+                try:
+                    result = response.json()
+                    print("\nParsed JSON response:")
+                    print(json.dumps(result, indent=2))
+                except json.JSONDecodeError as e:
+                    print(f"\nError parsing JSON: {str(e)}")
+            except requests.exceptions.RequestException as e:
+                print(f"Request error: {str(e)}")
         
         elif args.command in ["add", "list", "save", "load"]:
             solver = OllamaCalculusSolver()
