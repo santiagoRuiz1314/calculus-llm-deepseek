@@ -162,7 +162,7 @@ Si encuentras problemas de conexión, asegúrate de que:
 ```
 ollama-calculus-solver/
 ├── calculus_solver.py       # Script principal
-├── README.md                # Este archivo
+└── README.md                # Este archivo
 ```
 
 
