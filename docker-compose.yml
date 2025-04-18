@@ -1,0 +1,50 @@
+version: '3'
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    volumes:
+      - ollama_data:/root/.ollama
+    ports:
+      - "11434:11434"
+    restart: unless-stopped
+
+  calculus-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: calculus-api
+    volumes:
+      - calculus_data:/data
+    ports:
+      - "8000:8000"
+    environment:
+      - EXAMPLES_FILE=/data/calculus_examples.json
+    depends_on:
+      - ollama
+    restart: unless-stopped
+
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui
+    volumes:
+      - open-webui-data:/app/backend/data
+    ports:
+      - "3000:8080"
+    environment:
+      - OLLAMA_API_BASE_URL=http://ollama:11434/api
+      - CUSTOM_API_BASE_URL=http://calculus-api:8000
+      - WEBUI_AUTH=false # Set to true to enable authentication
+      - WEBUI_NAME=Calculus Solver WebUI
+    depends_on:
+      - ollama
+      - calculus-api
+    restart: unless-stopped
+
+volumes:
+  ollama_data:
+  calculus_data:
+  open-webui-data:
+
+

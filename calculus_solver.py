@@ -1,10 +1,10 @@
 from dotenv import load_dotenv
 import json
-import argparse
 import requests
+import os
 
 class OllamaCalculusSolver:
-    def __init__(self, model_name="deepseek-r1", base_url="http://localhost:11434"):
+    def __init__(self, model_name="deepseek-r1", base_url="http://ollama:11434"):
         """Initialize the Ollama Calculus Solver with model name and base URL."""
         load_dotenv()
         self.model_name = model_name
@@ -16,33 +16,31 @@ class OllamaCalculusSolver:
             response = requests.get(f"{self.base_url}/api/tags")
             if response.status_code != 200:
                 print(f"Warning: Could not connect to Ollama server at {self.base_url}")
-                print("Make sure Ollama is running with the command: 'ollama serve'")
-            else:
-                models = response.json().get("models", [])
-                model_names = [model.get("name").split(':')[0] for model in models]  # Strip tags like ':latest'
-                if self.model_name not in model_names and models:
-                    available_models = ", ".join(set(model_names))
-                    print(f"Warning: Model '{self.model_name}' not found in available models: {available_models}")
-                    print(f"You may need to run: 'ollama pull {self.model_name}'")
         except requests.exceptions.ConnectionError:
             print(f"Warning: Could not connect to Ollama server at {self.base_url}")
-            print("Make sure Ollama is running with the command: 'ollama serve'")
         
-        # Load example calculus problems and solutions for fine-tuning
-        self.examples = [
-            {
-                "problem": "Find the derivative of f(x) = x^3 + 2x^2 - 5x + 3",
-                "solution": "To find the derivative of f(x) = x^3 + 2x^2 - 5x + 3, we apply the power rule and linearity of differentiation:\n\nf'(x) = 3x^2 + 4x - 5\n\nStep-by-step:\n1. For x^3: The derivative is 3x^2\n2. For 2x^2: The derivative is 4x\n3. For -5x: The derivative is -5\n4. For constant 3: The derivative is 0\n\nCombining all terms: f'(x) = 3x^2 + 4x - 5"
-            },
-            {
-                "problem": "Calculate the integral of g(x) = 2x + e^x",
-                "solution": "To calculate the indefinite integral of g(x) = 2x + e^x, we apply integration rules:\n\n∫g(x)dx = ∫(2x + e^x)dx = ∫2x dx + ∫e^x dx = x^2 + e^x + C\n\nStep-by-step:\n1. For ∫2x dx: The integral is 2(x^2/2) = x^2\n2. For ∫e^x dx: The integral is e^x\n3. Add constant of integration C\n\nFinal answer: ∫g(x)dx = x^2 + e^x + C"
-            },
-            {
-                "problem": "Find the local extrema of h(x) = x^3 - 6x^2 + 9x + 1",
-                "solution": "To find the local extrema of h(x) = x^3 - 6x^2 + 9x + 1:\n\nStep 1: Find h'(x)\nh'(x) = 3x^2 - 12x + 9\n\nStep 2: Set h'(x) = 0 and solve\n3x^2 - 12x + 9 = 0\n3(x^2 - 4x + 3) = 0\n3(x - 1)(x - 3) = 0\nx = 1 or x = 3\n\nStep 3: Calculate h''(x)\nh''(x) = 6x - 12\n\nStep 4: Evaluate h''(x) at critical points\nh''(1) = 6(1) - 12 = -6 < 0, so x = 1 is a local maximum\nh''(3) = 6(3) - 12 = 6 > 0, so x = 3 is a local minimum\n\nStep 5: Calculate function values\nh(1) = 1^3 - 6(1)^2 + 9(1) + 1 = 1 - 6 + 9 + 1 = 5\nh(3) = 3^3 - 6(3)^2 + 9(3) + 1 = 27 - 54 + 27 + 1 = 1\n\nFinal answer: Local maximum at x = 1 with h(1) = 5, and local minimum at x = 3 with h(3) = 1"
-            }
-        ]
+        # Define the examples file path
+        self.examples_file = os.environ.get("EXAMPLES_FILE", "calculus_examples.json")
+        
+        # Load example calculus problems and solutions
+        try:
+            self.load_examples(self.examples_file)
+        except:
+            # If file doesn't exist, use default examples
+            self.examples = [
+                {
+                    "problem": "Find the derivative of f(x) = x^3 + 2x^2 - 5x + 3",
+                    "solution": "To find the derivative of f(x) = x^3 + 2x^2 - 5x + 3, we apply the power rule and linearity of differentiation:\n\nf'(x) = 3x^2 + 4x - 5\n\nStep-by-step:\n1. For x^3: The derivative is 3x^2\n2. For 2x^2: The derivative is 4x\n3. For -5x: The derivative is -5\n4. For constant 3: The derivative is 0\n\nCombining all terms: f'(x) = 3x^2 + 4x - 5"
+                },
+                {
+                    "problem": "Calculate the integral of g(x) = 2x + e^x",
+                    "solution": "To calculate the indefinite integral of g(x) = 2x + e^x, we apply integration rules:\n\n∫g(x)dx = ∫(2x + e^x)dx = ∫2x dx + ∫e^x dx = x^2 + e^x + C\n\nStep-by-step:\n1. For ∫2x dx: The integral is 2(x^2/2) = x^2\n2. For ∫e^x dx: The integral is e^x\n3. Add constant of integration C\n\nFinal answer: ∫g(x)dx = x^2 + e^x + C"
+                },
+                {
+                    "problem": "Find the local extrema of h(x) = x^3 - 6x^2 + 9x + 1",
+                    "solution": "To find the local extrema of h(x) = x^3 - 6x^2 + 9x + 1:\n\nStep 1: Find h'(x)\nh'(x) = 3x^2 - 12x + 9\n\nStep 2: Set h'(x) = 0 and solve\n3x^2 - 12x + 9 = 0\n3(x^2 - 4x + 3) = 0\n3(x - 1)(x - 3) = 0\nx = 1 or x = 3\n\nStep 3: Calculate h''(x)\nh''(x) = 6x - 12\n\nStep 4: Evaluate h''(x) at critical points\nh''(1) = 6(1) - 12 = -6 < 0, so x = 1 is a local maximum\nh''(3) = 6(3) - 12 = 6 > 0, so x = 3 is a local minimum\n\nStep 5: Calculate function values\nh(1) = 1^3 - 6(1)^2 + 9(1) + 1 = 1 - 6 + 9 + 1 = 5\nh(3) = 3^3 - 6(3)^2 + 9(3) + 1 = 27 - 54 + 27 + 1 = 1\n\nFinal answer: Local maximum at x = 1 with h(1) = 5, and local minimum at x = 3 with h(3) = 1"
+                }
+            ]
     
     def create_system_prompt(self):
         """Create a system prompt for the model to solve calculus problems."""
@@ -81,7 +79,7 @@ class OllamaCalculusSolver:
                 "options": {
                     "temperature": temperature
                 },
-                "stream": False  # Explicitly set stream to False
+                "stream": False
             }
             
             response = requests.post(self.api_url, json=payload)
@@ -95,7 +93,6 @@ class OllamaCalculusSolver:
                 else:
                     return f"Error: Unexpected response format from Ollama: {result}"
             except json.JSONDecodeError as e:
-                # Handle JSON parsing error
                 return f"Error parsing response: {str(e)}\nResponse text: {response.text[:200]}..."
                 
         except requests.exceptions.RequestException as e:
@@ -104,156 +101,24 @@ class OllamaCalculusSolver:
     def add_example(self, problem, solution):
         """Add a new example to the training data."""
         self.examples.append({"problem": problem, "solution": solution})
+        # Auto-save when adding examples
+        self.save_examples()
     
-    def save_examples(self, filename="calculus_examples.json"):
+    def save_examples(self, filename=None):
         """Save the examples to a JSON file."""
+        if filename is None:
+            filename = self.examples_file
+            
+        os.makedirs(os.path.dirname(filename) if os.path.dirname(filename) else ".", exist_ok=True)
+        
         with open(filename, "w") as f:
             json.dump(self.examples, f, indent=4)
     
-    def load_examples(self, filename="calculus_examples.json"):
+    def load_examples(self, filename=None):
         """Load examples from a JSON file."""
-        try:
-            with open(filename, "r") as f:
-                self.examples = json.load(f)
-            return True
-        except FileNotFoundError:
-            return False
-
-
-def main():
-    parser = argparse.ArgumentParser(description="Ollama Calculus Problem Solver")
-    subparsers = parser.add_subparsers(dest="command", help="Command to execute")
-    
-    # Solve command
-    solve_parser = subparsers.add_parser("solve", help="Solve a calculus problem")
-    solve_parser.add_argument("problem", help="The calculus problem to solve")
-    solve_parser.add_argument("--temperature", type=float, default=0.7, help="Temperature for response generation")
-    solve_parser.add_argument("--model", default="deepseek-r1", help="Model name to use (default: deepseek-r1)")
-    solve_parser.add_argument("--url", default="http://localhost:11434", help="Ollama server URL")
-    
-    # Add example command
-    add_parser = subparsers.add_parser("add", help="Add a new example with problem and solution")
-    add_parser.add_argument("--problem", required=True, help="The calculus problem")
-    add_parser.add_argument("--solution", required=True, help="The solution to the problem")
-    
-    # List examples command
-    subparsers.add_parser("list", help="List all examples in the training set")
-    
-    # List models command
-    list_models_parser = subparsers.add_parser("models", help="List available models in Ollama")
-    list_models_parser.add_argument("--url", default="http://localhost:11434", help="Ollama server URL")
-    
-    # Save examples command
-    save_parser = subparsers.add_parser("save", help="Save examples to a file")
-    save_parser.add_argument("--filename", default="calculus_examples.json", help="Filename to save examples")
-    
-    # Load examples command
-    load_parser = subparsers.add_parser("load", help="Load examples from a file")
-    load_parser.add_argument("--filename", default="calculus_examples.json", help="Filename to load examples from")
-    
-    # Pure API test command (for debugging)
-    test_parser = subparsers.add_parser("test", help="Test direct API communication")
-    test_parser.add_argument("--model", default="deepseek-r1", help="Model name to test")
-    test_parser.add_argument("--url", default="http://localhost:11434", help="Ollama server URL")
-    
-    args = parser.parse_args()
-    
-    try:
-        if args.command == "solve":
-            solver = OllamaCalculusSolver(model_name=args.model, base_url=args.url)
-            solution = solver.solve_problem(args.problem, args.temperature)
-            print("\n=== Calculus Problem ===")
-            print(args.problem)
-            print("\n=== Solution ===")
-            print(solution)
-        
-        elif args.command == "models":
-            base_url = args.url if hasattr(args, 'url') else "http://localhost:11434"
-            try:
-                response = requests.get(f"{base_url}/api/tags")
-                response.raise_for_status()
-                models = response.json().get("models", [])
-                print("\n=== Available Ollama Models ===")
-                if models:
-                    for model in models:
-                        print(f"- {model.get('name')}")
-                else:
-                    print("No models found. You can pull models with 'ollama pull <model-name>'")
-                    print("Example: ollama pull deepseek-r1")
-            except requests.exceptions.RequestException as e:
-                print(f"Error connecting to Ollama server: {str(e)}")
-                print("Make sure Ollama is running with the command: 'ollama serve'")
-        
-        elif args.command == "test":
-            # Simple API test with minimal context
-            base_url = args.url
-            api_url = f"{base_url}/api/chat"
+        if filename is None:
+            filename = self.examples_file
             
-            # Minimal prompt for testing
-            payload = {
-                "model": args.model,
-                "messages": [
-                    {"role": "user", "content": "What is 2+2?"}
-                ],
-                "stream": False
-            }
-            
-            print(f"Testing API connection to {api_url} with model {args.model}...")
-            try:
-                response = requests.post(api_url, json=payload)
-                response.raise_for_status()
-                
-                print(f"Response status: {response.status_code}")
-                print(f"Response headers: {response.headers}")
-                print(f"Response content type: {response.headers.get('Content-Type')}")
-                
-                # Print raw response
-                print("\nRaw response text:")
-                print(response.text[:500] + ("..." if len(response.text) > 500 else ""))
-                
-                # Try to parse JSON
-                try:
-                    result = response.json()
-                    print("\nParsed JSON response:")
-                    print(json.dumps(result, indent=2))
-                except json.JSONDecodeError as e:
-                    print(f"\nError parsing JSON: {str(e)}")
-            except requests.exceptions.RequestException as e:
-                print(f"Request error: {str(e)}")
-        
-        elif args.command in ["add", "list", "save", "load"]:
-            solver = OllamaCalculusSolver()
-            
-            if args.command == "add":
-                solver.add_example(args.problem, args.solution)
-                print(f"Added new example. Total examples: {len(solver.examples)}")
-                
-            elif args.command == "list":
-                print("\n=== Calculus Examples ===")
-                for i, example in enumerate(solver.examples, 1):
-                    print(f"\nExample {i}:")
-                    print(f"Problem: {example['problem']}")
-                    print(f"Solution: {example['solution']}")
-                    
-            elif args.command == "save":
-                solver.save_examples(args.filename)
-                print(f"Saved {len(solver.examples)} examples to {args.filename}")
-                
-            elif args.command == "load":
-                success = solver.load_examples(args.filename)
-                if success:
-                    print(f"Loaded {len(solver.examples)} examples from {args.filename}")
-                else:
-                    print(f"Could not find file {args.filename}")
-        
-        else:
-            parser.print_help()
-            
-    except ValueError as e:
-        print(f"Error: {str(e)}")
-    except Exception as e:
-        print(f"Unexpected error: {str(e)}")
-
-
-if __name__ == "__main__":
-    main()
+        with open(filename, "r") as f:
+            self.examples = json.load(f)
+        return True

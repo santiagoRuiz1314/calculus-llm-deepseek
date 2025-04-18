@@ -1,6 +1,6 @@
 # Ollama Calculus Solver
 
-Un solucionador de problemas de cálculo basado en LLM que utiliza Ollama con el modelo DeepSeek-R1 para resolver problemas matemáticos de nivel universitario con soluciones paso a paso.
+Un solucionador de problemas de cálculo basado en LLM que utiliza Ollama con el modelo DeepSeek-R1 para resolver problemas matemáticos de nivel universitario con soluciones paso a paso, ahora disponible con interfaz web a través de OpenWebUI y despliegue sencillo mediante Docker.
 
 ## Descripción
 
@@ -11,6 +11,8 @@ La herramienta se conecta a Ollama (que ejecuta localmente el modelo DeepSeek-R1
 - Explicaciones de conceptos de cálculo
 - Identificación de errores comunes
 - Notación matemática adecuada
+- Interfaz web amigable mediante OpenWebUI
+- API RESTful para integraciones con otros sistemas
 
 ## Características
 
@@ -18,155 +20,130 @@ La herramienta se conecta a Ollama (que ejecuta localmente el modelo DeepSeek-R1
 - Proporciona explicaciones paso a paso con rigor matemático
 - Compatible con diferentes modelos de LLM a través de Ollama
 - Ajustes de temperatura para controlar la creatividad de las respuestas
-- Interfaz de línea de comandos simple y fácil de usar
+- Interfaz web intuitiva para consultas mediante chat
+- Despliegue rápido con Docker y Docker Compose
+- API basada en FastAPI para integración con aplicaciones externas
 
 ## Requisitos Previos
 
 Para utilizar esta herramienta, necesitarás:
 
-- Python 3.8 o superior
-- [Ollama](https://ollama.ai/) instalado y configurado
-- Modelo DeepSeek-R1 (u otro compatible) disponible en tu instalación de Ollama
+- Docker y Docker Compose instalados
+- GPU NVIDIA para mejor rendimiento (opcional)
+- NVIDIA Container Toolkit si utilizas GPU
 
-##  Instalación
+## Instalación
 
-1. Crea un entorno virtual (recomendado):
-```bash
-python -m venv venv
-source venv/bin/activate  # En Windows: venv\Scripts\activate
-```
-
-2. Clona este repositorio:
+1. Clona este repositorio:
 ```bash
 git clone https://github.com/tuusuario/ollama-calculus-solver.git
 cd ollama-calculus-solver
 ```
 
-3. Instala las dependencias:
+2. Descarga el modelo DeepSeek-R1 (opcional, pero recomendado):
 ```bash
-pip install -r requirements.txt
+docker run --rm -v ollama_data:/root/.ollama ollama/ollama pull deepseek-r1
 ```
 
-4. Asegúrate de tener Ollama instalado y el modelo DeepSeek-R1 descargado:
+3. Inicia los servicios con Docker Compose:
 ```bash
-ollama pull deepseek-r1
+docker-compose up -d
 ```
+
+4. Accede a las interfaces:
+   - Interfaz web: http://localhost:3000
+   - Documentación API: http://localhost:8000/docs
 
 ## Uso
 
-Para resolver un problema de cálculo, utiliza el siguiente comando:
+### A través de la interfaz web:
 
-```
-python calculus_solver.py solve "Find the derivative of f(x) = x^3 + 2x^2 - 5x + 3"
-```
+1. Abre tu navegador y navega a http://localhost:3000
+2. Crea un nuevo chat y selecciona el modelo DeepSeek-R1
+3. Escribe tu problema de cálculo en la interfaz
+4. Recibe soluciones detalladas con explicaciones paso a paso
 
-```
-python calculus_solver.py solve "Calculate the integral of g(x) = 2x + e^x"
-```
+### Ejemplos de problemas para probar:
 
-```
-python calculus_solver.py solve "Find the local extrema of h(x) = x^3 - 6x^2 + 9x + 1"
-```
+- Find the derivative of f(x) = x^3 + 2x^2 - 5x + 3
+- Calculate the integral of g(x) = 2x + e^x
+- Find the local extrema of h(x) = x^3 - 6x^2 + 9x + 1
+- Evaluate the limit as x approaches 0 of (sin x)/x
+- Find the derivative of f(x) = sin(x)cos(x)
+- Calculate the definite integral of x^2 from 0 to 3
+- Find all critical points of f(x) = x^4 - 4x^2 + 2
+- Calculate the derivative of g(x) = ln(x^2 + 1)
+- Find the area between the curves y = x^2 and y = x^3 from x = 0 to x = 1
+- Compute the Taylor series expansion of e^x around x = 0 up to the 4th term
+- Find the volume of the solid obtained by rotating y = sin(x) from x = 0 to x = π around the x-axis
+- Calculate the derivative of h(x) = (x^2 + 3x)^4 using the chain rule
+- Find the solution to the differential equation dy/dx = y with y(0) = 1
+- Evaluate the improper integral of 1/x^2 from 1 to infinity
+- Calculate the partial derivatives of f(x,y) = x^2y + y^3
 
-```
-python calculus_solver.py solve "Evaluate the limit as x approaches 0 of (sin x)/x"
-```
+### A través de la API REST:
 
-```
-python calculus_solver.py solve "Find the derivative of f(x) = sin(x)cos(x)"
-```
-
-```
-python calculus_solver.py solve "Calculate the definite integral of x^2 from 0 to 3"
-```
-
-```
-python calculus_solver.py solve "Find all critical points of f(x) = x^4 - 4x^2 + 2"
-```
-
-```
-python calculus_solver.py solve "Calculate the derivative of g(x) = ln(x^2 + 1)"
-```
-
-```
-python calculus_solver.py solve "Find the area between the curves y = x^2 and y = x^3 from x = 0 to x = 1"
-```
-
-```
-python calculus_solver.py solve "Compute the Taylor series expansion of e^x around x = 0 up to the 4th term"
-```
-
-```
-python calculus_solver.py solve "Find the volume of the solid obtained by rotating y = sin(x) from x = 0 to x = π around the x-axis"
-```
-
-```
-python calculus_solver.py solve "Calculate the derivative of h(x) = (x^2 + 3x)^4 using the chain rule"
-```
-
-```
-python calculus_solver.py solve "Find the solution to the differential equation dy/dx = y with y(0) = 1"
-```
-
-```
-python calculus_solver.py solve "Evaluate the improper integral of 1/x^2 from 1 to infinity"
-```
-
-```
-python calculus_solver.py solve "Calculate the partial derivatives of f(x,y) = x^2y + y^3"
-```
-
-## Debugging:
-
-```
-python calculus_solver.py test --model deepseek-r1
-```
-
-```
-python calculus_solver.py models
-
-
-### Opciones adicionales:
-
-Puedes especificar un modelo diferente o ajustar la temperatura:
+Puedes interactuar con el solucionador mediante peticiones HTTP:
 
 ```bash
-python calculus_solver.py solve "Tu problema" --model llama3
+curl -X POST http://localhost:8000/solve \
+  -H "Content-Type: application/json" \
+  -d '{"problem": "Find the derivative of x^2 + 3x", "temperature": 0.7, "model": "deepseek-r1"}'
 ```
+
+## Personalización de ejemplos
+
+Puedes añadir tus propios ejemplos para mejorar las capacidades del solucionador:
 
 ```bash
-python calculus_solver.py solve "Tu problema" --temperature 0.2
+curl -X POST http://localhost:8000/examples/add \
+  -H "Content-Type: application/json" \
+  -d '{"problem": "Find the derivative of f(x) = e^(2x) * cos(x)", "solution": "La solución detallada paso a paso..."}'
 ```
-
-### Comandos de utilidad:
-
-Para probar la conexión:
-```bash
-python calculus_solver.py test --model deepseek-r1
-```
-
-Para listar los modelos disponibles:
-```bash
-python calculus_solver.py models
-```
-
-## Solución de problemas
-
-Si encuentras problemas de conexión, asegúrate de que:
-1. Ollama esté instalado y en ejecución
-2. El modelo DeepSeek-R1 (u otro especificado) esté disponible
-3. El servicio de Ollama esté accesible en http://localhost:11434
 
 ## Estructura del proyecto
 
 ```
 ollama-calculus-solver/
-├── calculus_solver.py       # Script principal
-└── README.md                # Este archivo
+├── app.py                    # API FastAPI
+├── calculus_solver.py        # Núcleo del solucionador de cálculo
+├── Dockerfile                # Configuración Docker
+├── docker-compose.yml        # Orquestación de servicios
+├── requirements.txt          # Dependencias Python
+├── calculus_examples.json    # Ejemplos para entrenamiento
+└── README.md                 # Este archivo
 ```
 
+## Solución de problemas
+
+Si encuentras problemas con la instalación, revisa los logs:
+```bash
+docker-compose logs -f calculus-api
+docker-compose logs -f ollama
+docker-compose logs -f open-webui
+```
+
+Asegúrate de que:
+1. Docker y Docker Compose estén instalados correctamente
+2. El modelo DeepSeek-R1 esté disponible
+3. Los puertos 3000, 8000 y 11434 no estén siendo utilizados por otras aplicaciones
+
+Si Ollama no puede cargar el modelo, intenta descargarlo manualmente:
+```bash
+docker exec -it ollama ollama pull deepseek-r1
+```
+
+## Configuración avanzada
+
+Para habilitar la autenticación en la interfaz web, modifica la variable `WEBUI_AUTH=true` en el archivo docker-compose.yml. Las credenciales predeterminadas son:
+- Usuario: admin
+- Contraseña: password
+
+Es recomendable cambiar estas credenciales después del primer inicio de sesión.
 
 ## Agradecimientos
 
 - Proyecto Ollama por proporcionar una forma sencilla de ejecutar LLMs localmente
 - Equipo de DeepSeek por su excelente modelo DeepSeek-R1
+- Proyecto OpenWebUI por la interfaz web
+- FastAPI por el framework de API
